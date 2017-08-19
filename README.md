@@ -9,6 +9,7 @@ meant to be used with:
 
 * import of RTM files in RTM_0101 format
 * for each RTM frame a keyframe is added for every animated bone
+* if Arma Toolbox is installed, import motion vector automatically
 
 ## Known Issues ##
 

@@ -30,6 +30,8 @@ import struct
 import bpy
 import mathutils
 import bpy_extras
+import importlib
+from importlib import util
 
 def read_rtm(file, verbose=False):
     signature = struct.unpack('8s', file.read(8))[0]
@@ -79,6 +81,12 @@ def import_rtm(rtm, frame_start=0, set_frame_range=True, mute_bone_constraints=T
 
     if result != 0:
         return (result, 0)
+
+    if not importlib.util.find_spec("RTMExporter") == None:
+    	bpy.context.object.armaObjProps.motionVector[0] = absolut_vector[0]
+	bpy.context.object.armaObjProps.motionVector[1] = absolut_vector[2]
+	bpy.context.object.armaObjProps.motionVector[2] = absolut_vector[1]
+
 
     pose = bpy.context.object.pose
     rig = bpy.context.object.data
