@@ -16,8 +16,8 @@
 bl_info = {
     "name": "RTM Import",
     "author": "4d4a5852",
-    "version": (0, 1, 0),
-    "blender": (2, 65, 0),
+    "version": (0, 2, 0),
+    "blender": (2, 78, 0),
     "location": "File -> Import",
     "description": "Import Arma 2/3 RTM files",
     "warning": "",
@@ -83,9 +83,9 @@ def import_rtm(rtm, frame_start=0, set_frame_range=True, mute_bone_constraints=T
         return (result, 0)
 
     if not importlib.util.find_spec("RTMExporter") == None:
-    	bpy.context.object.armaObjProps.motionVector[0] = absolut_vector[0]
-	bpy.context.object.armaObjProps.motionVector[1] = absolut_vector[2]
-	bpy.context.object.armaObjProps.motionVector[2] = absolut_vector[1]
+        bpy.context.object.armaObjProps.motionVector[0] = absolut_vector[0]
+        bpy.context.object.armaObjProps.motionVector[1] = absolut_vector[2]
+        bpy.context.object.armaObjProps.motionVector[2] = absolut_vector[1]
 
 
     pose = bpy.context.object.pose
