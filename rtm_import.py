@@ -16,8 +16,8 @@
 bl_info = {
     "name": "RTM Import",
     "author": "4d4a5852",
-    "version": (0, 1, 0),
-    "blender": (2, 65, 0),
+    "version": (0, 2, 0),
+    "blender": (2, 80, 0),
     "location": "File -> Import",
     "description": "Import Arma 2/3 RTM files",
     "warning": "",
@@ -27,9 +27,15 @@ bl_info = {
     }
 
 import struct
+import os
 import bpy
 import mathutils
 import bpy_extras
+import importlib
+from importlib import util
+from bpy_extras.io_utils import ImportHelper
+from bpy.props import StringProperty, BoolProperty, EnumProperty
+from bpy.types import Operator
 
 def read_rtm(file, verbose=False):
     signature = struct.unpack('8s', file.read(8))[0]
@@ -80,8 +86,16 @@ def import_rtm(rtm, frame_start=0, set_frame_range=True, mute_bone_constraints=T
     if result != 0:
         return (result, 0)
 
+    if not importlib.util.find_spec("RTMExporter") == None:
+        bpy.context.object.armaObjProps.motionVector[0] = absolut_vector[0]
+        bpy.context.object.armaObjProps.motionVector[1] = absolut_vector[2]
+        bpy.context.object.armaObjProps.motionVector[2] = absolut_vector[1]
+
+
     pose = bpy.context.object.pose
     rig = bpy.context.object.data
+    dg = bpy.context.evaluated_depsgraph_get()
+
     rootBones = [b for b in rig.bones if not b.parent]
     boneHierarchy = list(rootBones)
     for bone in rootBones:
@@ -112,9 +126,9 @@ def import_rtm(rtm, frame_start=0, set_frame_range=True, mute_bone_constraints=T
                 mat = mathutils.Matrix([[m[0], m[6], m[3], m[9]], [m[2], m[8], m[5], m[11]],
                                         [m[1], m[7], m[4], m[10]], [0, 0, 0, 1]])
                 if bone.parent in bones_to_update:
-                    bpy.context.scene.update()
+                    dg.update()
                     bones_to_update = []
-                pose.bones[bone.name].matrix = mat * bone.matrix_local
+                pose.bones[bone.name].matrix = mat @ bone.matrix_local
                 bones_to_update.append(bone)
 
                 pose.bones[bone.name].keyframe_insert('location', group=bone.name, frame=frame_num,
@@ -128,28 +142,28 @@ def import_rtm(rtm, frame_start=0, set_frame_range=True, mute_bone_constraints=T
                 if verbose:
                     print(bone.name.lower(), ' not found')
         frame_num += 1
-        bpy.context.scene.update()
+        dg.update()
     bpy.context.window_manager.progress_end()
     return (0, len(frames))
 
-class RtmImport(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
-    bl_idname = "rtm.import"
+class ATBX_OT_RtmImport(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
+    bl_idname = "rtm.importer"
     bl_label = "Import RTM"
     bl_description = "Import RTM"
-    filter_glob = bpy.props.StringProperty(
+    filter_glob : bpy.props.StringProperty(
         default="*.rtm",
         options={'HIDDEN'})
     filename_ext = ".rtm"
 
-    frame_start = bpy.props.IntProperty(
+    frame_start : bpy.props.IntProperty(
         name="Start Frame",
         description="Starting frame in the timeline for the animation import",
         default=0)
-    set_frame_range = bpy.props.BoolProperty(
+    set_frame_range : bpy.props.BoolProperty(
         name="Set Frame Range",
         description="Set first and final frame of the playback/rendering range",
         default=True)
-    mute_bone_constraints = bpy.props.BoolProperty(
+    mute_bone_constraints : bpy.props.BoolProperty(
         name="Disable Bone Constraints (RECOMMEND!)",
         description="Disable all bone constraints on the armature",
         default=True)
@@ -168,15 +182,34 @@ class RtmImport(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         return {'FINISHED'}
 
 def RtmImportMenuFunc(self, context):
-    self.layout.operator(RtmImport.bl_idname, text="Arma 2/3 RTM (.rtm)")
+    self.layout.operator(ATBX_OT_RtmImport.bl_idname, text="Arma 2/3 RTM (.rtm)")
+
+##def register():
+##    bpy.utils.register_module(__name__, verbose=True)
+##    bpy.types.INFO_MT_file_import.append(RtmImportMenuFunc)
+##
+##def unregister():
+##    bpy.types.INFO_MT_file_import.remove(RtmImportMenuFunc)
+##    bpy.utils.unregister_module(__name__)
+
+##classes = (
+##    ATBX_OT_RtmImport
+##)
 
 def register():
-    bpy.utils.register_module(__name__, verbose=True)
-    bpy.types.INFO_MT_file_import.append(RtmImportMenuFunc)
+    bpy.utils.register_class(ATBX_OT_RtmImport)
+    bpy.types.TOPBAR_MT_file_import.append(RtmImportMenuFunc)
+
+print("Register done")
 
 def unregister():
-    bpy.types.INFO_MT_file_import.remove(RtmImportMenuFunc)
-    bpy.utils.unregister_module(__name__)
+    bpy.utils.unregister_class(ATBX_OT_RtmImport)
+    bpy.types.TOPBAR_MT_file_import.remove(RtmImportMenuFunc)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     register()
+
+    # test call
+    bpy.ops.rtm.importer('INVOKE_DEFAULT')
+    
