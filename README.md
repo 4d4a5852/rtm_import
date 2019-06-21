@@ -32,7 +32,7 @@ Blender:
 ## If Install Fails ##
 
 * Navigate to "C:\Users\YOURNAME\AppData\Roaming\Blender Foundation\Blender\2.80\scripts\addons" and delete the rtm_import folder.
-* Installing the rtm_import will now work after deleting above folder.
+* Installing the rtm_import.py will now work after deleting above folder.
 
 ## Usage ##
 
