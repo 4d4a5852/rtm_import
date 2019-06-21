@@ -1,4 +1,4 @@
-# rtm_import
+# rtm_import For Blender 2.8
 Blender Addon for importing Arma 2/3 RTM files
 
 meant to be used with:
@@ -9,6 +9,7 @@ meant to be used with:
 
 * import of RTM files in RTM_0101 format
 * for each RTM frame a keyframe is added for every animated bone
+* Motion vector now automatically added to RTM motion vector in Arma Object Properties (Thanks to Turmio)
 
 ## Known Issues ##
 
@@ -27,6 +28,11 @@ Blender:
 * navigate to the 'rtm_import.py' file and select it
 * install it by pressing 'Install from File...'
 * enable the addon by setting the checkmark in front of it
+
+## If Install Fails ##
+
+* Navigate to "C:\Users\YOURNAME\AppData\Roaming\Blender Foundation\Blender\2.80\scripts\addons" and delete the rtm_import folder.
+* Installing the rtm_import will now work after deleting above folder.
 
 ## Usage ##
 
