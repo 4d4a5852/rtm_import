@@ -74,12 +74,19 @@ def read_rtm(file, verbose=False):
 
     return (0, absolut_vector, bones, frames)
 
-def import_rtm(rtm, frame_start=0, set_frame_range=True, mute_bone_constraints=True, verbose=False):
+def import_rtm(rtm, frame_start=0, set_frame_range=True, mute_bone_constraints=True, verbose=False,
+               import_motion_vector=False):
     with open(rtm, 'rb') as file:
         result, absolut_vector, bones, frames = read_rtm(file)
 
     if result != 0:
         return (result, 0)
+
+    if (import_motion_vector and hasattr(bpy.context.object, 'armaObjProps') and
+        hasattr(bpy.context.object.armaObjProps, 'motionVector')):
+        bpy.context.object.armaObjProps.motionVector[0] = absolut_vector[0]
+        bpy.context.object.armaObjProps.motionVector[1] = absolut_vector[2]
+        bpy.context.object.armaObjProps.motionVector[2] = absolut_vector[1]
 
     pose = bpy.context.object.pose
     rig = bpy.context.object.data
@@ -155,10 +162,16 @@ class RTMIMPORT_OT_RtmImport(bpy.types.Operator, bpy_extras.io_utils.ImportHelpe
         name="Disable Bone Constraints (RECOMMEND!)",
         description="Disable all bone constraints on the armature",
         default=True)
+    import_motion_vector: bpy.props.BoolProperty(
+        name="Import motion vector",
+        description="Import motion vector from RTM (for export with Arma Toolbox)",
+        default=True)
 
     def execute(self, context):
-        result, nFrames = import_rtm(self.filepath, self.frame_start,
-                                     self.set_frame_range, self.mute_bone_constraints)
+        result, nFrames = import_rtm(self.filepath, frame_start=self.frame_start,
+                                     set_frame_range=self.set_frame_range,
+                                     mute_bone_constraints=self.mute_bone_constraints,
+                                     import_motion_vector=self.import_motion_vector)
         if result == 0:
             self.report({'INFO'}, "{} frames imported".format(nFrames))
         elif result == 1:
