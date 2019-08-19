@@ -1,4 +1,4 @@
-# rtm_import
+# rtm_import for Blender 2.80
 Blender Addon for importing Arma 2/3 RTM files
 
 meant to be used with:
@@ -39,5 +39,10 @@ Blender:
     * 'Start Frame': frame in timeline where the RTM frames will be imported to (starting with this frame existing keyframes will be OVERWRITTEN for the bones animated in the RTM
     * 'Set Frame Range': select to set the frame range to the newly imported keyframes
     * 'Disable Bone Constraints': needs to be set to get valid imports (for now)
+    * 'Import motion vector': Import motion vector from RTM (for export with Arma Toolbox)
 * 'Import RTM'
 * import will start - its progress will be shown at the mouse cursor
+
+## Thanks ##
+* [Turmio](https://github.com/Turmio) for the motion vector import
+* [RobbbT](https://github.com/RobbbT) for the blender 2.80 update
