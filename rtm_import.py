@@ -17,7 +17,7 @@ bl_info = {
     "name": "RTM Import",
     "author": "4d4a5852",
     "version": (0, 1, 0),
-    "blender": (2, 65, 0),
+    "blender": (2, 80, 0),
     "location": "File -> Import",
     "description": "Import Arma 2/3 RTM files",
     "warning": "",
@@ -30,6 +30,7 @@ import struct
 import bpy
 import mathutils
 import bpy_extras
+from bpy.utils import register_class, unregister_class
 
 def read_rtm(file, verbose=False):
     signature = struct.unpack('8s', file.read(8))[0]
@@ -82,6 +83,7 @@ def import_rtm(rtm, frame_start=0, set_frame_range=True, mute_bone_constraints=T
 
     pose = bpy.context.object.pose
     rig = bpy.context.object.data
+    depsgraph = bpy.context.evaluated_depsgraph_get()
     rootBones = [b for b in rig.bones if not b.parent]
     boneHierarchy = list(rootBones)
     for bone in rootBones:
@@ -112,9 +114,9 @@ def import_rtm(rtm, frame_start=0, set_frame_range=True, mute_bone_constraints=T
                 mat = mathutils.Matrix([[m[0], m[6], m[3], m[9]], [m[2], m[8], m[5], m[11]],
                                         [m[1], m[7], m[4], m[10]], [0, 0, 0, 1]])
                 if bone.parent in bones_to_update:
-                    bpy.context.scene.update()
+                    depsgraph.update()
                     bones_to_update = []
-                pose.bones[bone.name].matrix = mat * bone.matrix_local
+                pose.bones[bone.name].matrix = mat @ bone.matrix_local
                 bones_to_update.append(bone)
 
                 pose.bones[bone.name].keyframe_insert('location', group=bone.name, frame=frame_num,
@@ -128,28 +130,28 @@ def import_rtm(rtm, frame_start=0, set_frame_range=True, mute_bone_constraints=T
                 if verbose:
                     print(bone.name.lower(), ' not found')
         frame_num += 1
-        bpy.context.scene.update()
+        depsgraph.update()
     bpy.context.window_manager.progress_end()
     return (0, len(frames))
 
-class RtmImport(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
-    bl_idname = "rtm.import"
+class RTMIMPORT_OT_RtmImport(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
+    bl_idname = "rtmimport.rtmimport"
     bl_label = "Import RTM"
     bl_description = "Import RTM"
-    filter_glob = bpy.props.StringProperty(
+    filter_glob: bpy.props.StringProperty(
         default="*.rtm",
         options={'HIDDEN'})
     filename_ext = ".rtm"
 
-    frame_start = bpy.props.IntProperty(
+    frame_start: bpy.props.IntProperty(
         name="Start Frame",
         description="Starting frame in the timeline for the animation import",
         default=0)
-    set_frame_range = bpy.props.BoolProperty(
+    set_frame_range: bpy.props.BoolProperty(
         name="Set Frame Range",
         description="Set first and final frame of the playback/rendering range",
         default=True)
-    mute_bone_constraints = bpy.props.BoolProperty(
+    mute_bone_constraints: bpy.props.BoolProperty(
         name="Disable Bone Constraints (RECOMMEND!)",
         description="Disable all bone constraints on the armature",
         default=True)
@@ -168,15 +170,21 @@ class RtmImport(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         return {'FINISHED'}
 
 def RtmImportMenuFunc(self, context):
-    self.layout.operator(RtmImport.bl_idname, text="Arma 2/3 RTM (.rtm)")
+    self.layout.operator(RTMIMPORT_OT_RtmImport.bl_idname, text="Arma 2/3 RTM (.rtm)")
+
+classes = (
+    RTMIMPORT_OT_RtmImport,
+    )
 
 def register():
-    bpy.utils.register_module(__name__, verbose=True)
-    bpy.types.INFO_MT_file_import.append(RtmImportMenuFunc)
+    for cls in classes:
+        register_class(cls)
+    bpy.types.TOPBAR_MT_file_import.append(RtmImportMenuFunc)
 
 def unregister():
-    bpy.types.INFO_MT_file_import.remove(RtmImportMenuFunc)
-    bpy.utils.unregister_module(__name__)
+    bpy.types.TOPBAR_MT_file_import.remove(RtmImportMenuFunc)
+    for cls in reversed(classes):
+        unregister_class(cls)
 
 if __name__ == '__main__':
     register()
