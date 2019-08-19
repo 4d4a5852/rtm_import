@@ -22,11 +22,11 @@ please report any other issue at https://github.com/4d4a5852/rtm_import/issues
 ## Installation ##
 
 Blender:
-* 'File' -> 'User Preferences'
+* 'Edit' -> 'Preferences'
 * select the 'Add-ons' tab
-* 'Install from File...'
+* 'Install...'
 * navigate to the 'rtm_import.py' file and select it
-* install it by pressing 'Install from File...'
+* install it by pressing 'Install Add-on from File...'
 * enable the addon by setting the checkmark in front of it
 
 ## Usage ##
