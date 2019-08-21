@@ -31,6 +31,7 @@ import bpy
 import mathutils
 import bpy_extras
 from bpy.utils import register_class, unregister_class
+import os
 
 def read_rtm(file, verbose=False):
     signature = struct.unpack('8s', file.read(8))[0]
@@ -75,7 +76,7 @@ def read_rtm(file, verbose=False):
     return (0, absolut_vector, bones, frames)
 
 def import_rtm(rtm, frame_start=0, set_frame_range=True, mute_bone_constraints=True, verbose=False,
-               import_motion_vector=False):
+               import_motion_vector=False, create_action=False):
     with open(rtm, 'rb') as file:
         result, absolut_vector, bones, frames = read_rtm(file)
 
@@ -87,6 +88,11 @@ def import_rtm(rtm, frame_start=0, set_frame_range=True, mute_bone_constraints=T
         bpy.context.object.armaObjProps.motionVector[0] = absolut_vector[0]
         bpy.context.object.armaObjProps.motionVector[1] = absolut_vector[2]
         bpy.context.object.armaObjProps.motionVector[2] = absolut_vector[1]
+
+    if create_action:
+        new_action = bpy.data.actions.new(os.path.splitext(os.path.basename(rtm))[0])
+        new_action.use_fake_user = 1
+        bpy.context.object.animation_data.action = new_action
 
     pose = bpy.context.object.pose
     rig = bpy.context.object.data
@@ -139,7 +145,7 @@ def import_rtm(rtm, frame_start=0, set_frame_range=True, mute_bone_constraints=T
         frame_num += 1
         depsgraph.update()
     bpy.context.window_manager.progress_end()
-    return (0, len(frames))
+    return (0, len(frames), bpy.context.object.animation_data.action.name)
 
 class RTMIMPORT_OT_RtmImport(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
     bl_idname = "rtmimport.rtmimport"
@@ -149,6 +155,7 @@ class RTMIMPORT_OT_RtmImport(bpy.types.Operator, bpy_extras.io_utils.ImportHelpe
         default="*.rtm",
         options={'HIDDEN'})
     filename_ext = ".rtm"
+    files: bpy.props.CollectionProperty(type=bpy.types.OperatorFileListElement)
 
     frame_start: bpy.props.IntProperty(
         name="Start Frame",
@@ -166,20 +173,30 @@ class RTMIMPORT_OT_RtmImport(bpy.types.Operator, bpy_extras.io_utils.ImportHelpe
         name="Import motion vector",
         description="Import motion vector from RTM (for export with Arma Toolbox)",
         default=True)
+    create_action: bpy.props.BoolProperty(
+        name="Create Action",
+        description="Create new action and switch to it - name is based on the filename",
+        default=False)
 
     def execute(self, context):
-        result, nFrames = import_rtm(self.filepath, frame_start=self.frame_start,
-                                     set_frame_range=self.set_frame_range,
-                                     mute_bone_constraints=self.mute_bone_constraints,
-                                     import_motion_vector=self.import_motion_vector)
-        if result == 0:
-            self.report({'INFO'}, "{} frames imported".format(nFrames))
-        elif result == 1:
-            self.report({'ERROR'}, "Binary RTMs are not supported")
-        elif result == 2:
-            self.report({'ERROR'}, "Unknown/Unsupported file format")
-        elif result != 0:
-            self.report({'ERROR'}, "Unknown Error")
+        files = [self.filepath]
+        if self.create_action:
+            folder = os.path.dirname(self.filepath)
+            files = [os.path.join(folder, f.name) for f in self.files]
+        for f in files:
+            result, nFrames, action = import_rtm(f, frame_start=self.frame_start,
+                                                 set_frame_range=self.set_frame_range,
+                                                 mute_bone_constraints=self.mute_bone_constraints,
+                                                 import_motion_vector=self.import_motion_vector,
+                                                 create_action=self.create_action)
+            if result == 0:
+                self.report({'INFO'}, "{} frames imported to action {}".format(nFrames, action))
+            elif result == 1:
+                self.report({'ERROR'}, "Binary RTMs are not supported")
+            elif result == 2:
+                self.report({'ERROR'}, "Unknown/Unsupported file format")
+            elif result != 0:
+                self.report({'ERROR'}, "Unknown Error")
         return {'FINISHED'}
 
 def RtmImportMenuFunc(self, context):
