@@ -10,6 +10,8 @@ meant to be used with:
 * import of RTM files in RTM_0101 format
 * for each RTM frame a keyframe is added for every animated bone
 * if Arma Toolbox is installed, allow import of the motion vector
+* (optionally) create a new action for every imported RTM - automatically name it based on its filename (without extension)
+* allow importing of multiple RTM files (only when using the 'Create Action' option)
 
 ## Known Issues ##
 
@@ -40,6 +42,7 @@ Blender:
     * 'Set Frame Range': select to set the frame range to the newly imported keyframes
     * 'Disable Bone Constraints': needs to be set to get valid imports (for now)
     * 'Import motion vector': Import motion vector from RTM (for export with Arma Toolbox)
+    * 'Create Action': Create new action and switch to it - name is based on the filename
 * 'Import RTM'
 * import will start - its progress will be shown at the mouse cursor
 
