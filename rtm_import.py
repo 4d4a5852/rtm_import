@@ -171,7 +171,7 @@ class RTMIMPORT_OT_RtmImport(bpy.types.Operator, bpy_extras.io_utils.ImportHelpe
         description="Set first and final frame of the playback/rendering range",
         default=True)
     mute_bone_constraints: bpy.props.BoolProperty(
-        name="Disable Bone Constraints (RECOMMEND!)",
+        name="Disable Bone Constraints (RECOMMENDED)",
         description="Disable all bone constraints on the armature",
         default=True)
     import_motion_vector: bpy.props.BoolProperty(
