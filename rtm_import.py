@@ -33,7 +33,7 @@ import bpy_extras
 from bpy.utils import register_class, unregister_class
 import os
 
-def read_rtm(file, verbose=False):
+def read_rtm(file, verbose=False, import_to_at=False):
     signature = struct.unpack('8s', file.read(8))[0]
     if signature != b'RTM_0101':
         if signature.startswith(b'BMTR'):
@@ -49,8 +49,11 @@ def read_rtm(file, verbose=False):
     bones = []
     frames = []
     for i in range(0, nBones):
-        bones.append(struct.unpack('32s', file.read(32))[0].split(sep=b'\0',
-                                                                  maxsplit=1)[0].decode().lower())
+        bone = struct.unpack('32s', file.read(32))[0].split(sep=b'\0',
+                                                            maxsplit=1)[0].decode().lower()
+        if import_to_at:
+            bone = "@" + bone
+        bones.append(bone)
     if verbose:
         print('Bones:')
         for b in bones:
@@ -62,6 +65,8 @@ def read_rtm(file, verbose=False):
         for i in range(0, nBones):
             bone = struct.unpack('32s', file.read(32))[0].split(sep=b'\0',
                                                                 maxsplit=1)[0].decode().lower()
+            if import_to_at:
+                bone = "@" + bone
             matrix = struct.unpack('12f', file.read(48))
             cur_frame[bone] = matrix
         frames.append({'frameTime': frameTime, 'frameData': cur_frame})
@@ -76,9 +81,9 @@ def read_rtm(file, verbose=False):
     return (0, absolut_vector, bones, frames)
 
 def import_rtm(rtm, frame_start=0, set_frame_range=True, mute_bone_constraints=True, verbose=False,
-               import_motion_vector=False, create_action=False):
+               import_motion_vector=False, create_action=False, import_to_at=False):
     with open(rtm, 'rb') as file:
-        result, absolut_vector, bones, frames = read_rtm(file)
+        result, absolut_vector, bones, frames = read_rtm(file, import_to_at=import_to_at)
 
     if result != 0:
         return (result, 0)
@@ -177,6 +182,11 @@ class RTMIMPORT_OT_RtmImport(bpy.types.Operator, bpy_extras.io_utils.ImportHelpe
         name="Create Action",
         description="Create new action and switch to it - name is based on the filename",
         default=False)
+    import_to_at: bpy.props.BoolProperty(
+        name="Import to @",
+        description="Import the RTM to the @bones (EXPERIMENTAL)",
+        default=False)
+    
 
     def execute(self, context):
         files = [self.filepath]
@@ -188,7 +198,8 @@ class RTMIMPORT_OT_RtmImport(bpy.types.Operator, bpy_extras.io_utils.ImportHelpe
                                                  set_frame_range=self.set_frame_range,
                                                  mute_bone_constraints=self.mute_bone_constraints,
                                                  import_motion_vector=self.import_motion_vector,
-                                                 create_action=self.create_action)
+                                                 create_action=self.create_action,
+                                                 import_to_at=self.import_to_at)
             if result == 0:
                 self.report({'INFO'}, "{} frames imported to action {}".format(nFrames, action))
             elif result == 1:

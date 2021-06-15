@@ -43,6 +43,7 @@ Blender:
     * 'Disable Bone Constraints': needs to be set to get valid imports (for now)
     * 'Import motion vector': Import motion vector from RTM (for export with Arma Toolbox)
     * 'Create Action': Create new action and switch to it - name is based on the filename
+    * 'Import to @': Experimental option to import the RTM bone data to the Blender bones named with a prepended '@', e.g. RTM bone 'LeftHand' will be imported onto Blender bone '@LeftHand' - an appropriately set up Blender rig is required
 * 'Import RTM'
 * import will start - its progress will be shown at the mouse cursor
 
