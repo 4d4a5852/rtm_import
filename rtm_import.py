@@ -16,7 +16,7 @@
 bl_info = {
     "name": "RTM Import",
     "author": "4d4a5852",
-    "version": (0, 4, 0),
+    "version": (0, 5, 0),
     "blender": (2, 80, 0),
     "location": "File -> Import",
     "description": "Import Arma 2/3 RTM files",
